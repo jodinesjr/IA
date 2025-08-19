@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo 2: Gerador de Descrição de Vagas com IA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .loader-main {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        .loader-inline {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #job-description-output ul, #adaptation-output ul {
+            list-style-position: inside;
+            padding-left: 1rem;
+        }
+        #job-description-output li, #adaptation-output li {
+            margin-bottom: 0.5rem;
+        }
+        .copy-prompt-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: #4a5568;
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .copy-prompt-btn:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
+        
+        <!-- Cabeçalho -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-purple-600">Criador de Descrições de Vagas com IA</h1>
+            <p class="text-gray-600 mt-2 text-lg">Transforme informações básicas em uma descrição de vaga atraente e completa.</p>
+        </header>
+
+        <main id="main-content" class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
+
+            <!-- Seção do Formulário -->
+            <div id="form-section">
+                <h2 class="text-2xl font-semibold mb-2 text-gray-700">Defina os Detalhes da Vaga</h2>
+                <p class="text-gray-500 mb-6">Preencha os campos e personalize as opções. A IA cuidará da redação.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Cargo -->
+                    <div class="md:col-span-2">
+                        <label for="job-title" class="block text-md font-medium text-gray-700">Cargo</label>
+                        <input type="text" id="job-title" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500" placeholder="Ex: Engenheiro(a) de Software Backend">
+                    </div>
+
+                    <!-- Nível de Senioridade -->
+                    <div>
+                        <label for="seniority" class="block text-md font-medium text-gray-700">Nível de Senioridade</label>
+                        <select id="seniority" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+                            <option>Estágio</option>
+                            <option>Júnior</option>
+                            <option selected>Pleno</option>
+                            <option>Sênior</option>
+                            <option>Especialista / Staff</option>
+                        </select>
+                    </div>
+
+                    <!-- Modelo de Trabalho -->
+                    <div>
+                        <label for="work-model" class="block text-md font-medium text-gray-700">Modelo de Trabalho</label>
+                        <select id="work-model" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+                            <option>Presencial</option>
+                            <option>Híbrido</option>
+                            <option selected>Remoto</option>
+                        </select>
+                    </div>
+
+                    <!-- Localização -->
+                    <div id="location-wrapper" class="hidden md:col-span-2">
+                        <label for="location" class="block text-md font-medium text-gray-700">Localização</label>
+                        <input type="text" id="location" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500" placeholder="Ex: São Paulo, SP">
+                    </div>
+
+                    <!-- Tom de Voz -->
+                    <div class="md:col-span-2">
+                        <label for="tone" class="block text-md font-medium text-gray-700">Tom de Voz</label>
+                        <select id="tone" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+                            <option selected>Amigável e Convidativo</option>
+                            <option>Formal e Corporativo</option>
+                            <option>Descontraído e Inovador</option>
+                            <option>Direto e Técnico</option>
+                        </select>
+                    </div>
+
+                    <!-- Responsabilidades -->
+                    <div class="md:col-span-2">
+                        <div class="flex justify-between items-center">
+                            <label for="responsibilities" class="block text-md font-medium text-gray-700">Principais Responsabilidades</label>
+                            <button id="generate-responsibilities-btn" class="text-sm font-semibold text-purple-600 hover:text-purple-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center">
+                                <span class="btn-text">✨ Gerar com IA</span>
+                                <div class="loader-inline ml-2 hidden"></div>
+                            </button>
+                        </div>
+                        <textarea id="responsibilities" rows="4" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500" placeholder="- Desenvolver e manter APIs RESTful&#10;- Colaborar com equipes de frontend e produto&#10;- Escrever código limpo e testável"></textarea>
+                        <div id="responsibilities-prompt-wrapper" class="hidden mt-2">
+                            <details class="group">
+                                <summary class="text-sm font-semibold text-gray-500 cursor-pointer list-none">Ver prompt utilizado</summary>
+                                <div class="relative mt-2 bg-gray-800 text-white p-4 rounded-lg">
+                                    <pre class="whitespace-pre-wrap text-xs" id="responsibilities-prompt-output"></pre>
+                                    <button class="copy-prompt-btn" data-copy-target="responsibilities-prompt-output"><i class="far fa-copy"></i></button>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+
+                    <!-- Requisitos -->
+                    <div class="md:col-span-2">
+                        <div class="flex justify-between items-center">
+                            <label for="requirements" class="block text-md font-medium text-gray-700">Requisitos Essenciais</label>
+                            <button id="generate-requirements-btn" class="text-sm font-semibold text-purple-600 hover:text-purple-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center">
+                                <span class="btn-text">✨ Gerar com IA</span>
+                                <div class="loader-inline ml-2 hidden"></div>
+                            </button>
+                        </div>
+                        <textarea id="requirements" rows="4" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500" placeholder="- Experiência com Node.js e TypeScript&#10;- Conhecimento em bancos de dados SQL e NoSQL&#10;- Familiaridade com Docker e AWS"></textarea>
+                        <div id="requirements-prompt-wrapper" class="hidden mt-2">
+                            <details class="group">
+                                <summary class="text-sm font-semibold text-gray-500 cursor-pointer list-none">Ver prompt utilizado</summary>
+                                <div class="relative mt-2 bg-gray-800 text-white p-4 rounded-lg">
+                                    <pre class="whitespace-pre-wrap text-xs" id="requirements-prompt-output"></pre>
+                                    <button class="copy-prompt-btn" data-copy-target="requirements-prompt-output"><i class="far fa-copy"></i></button>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botão Gerar -->
+                <div class="mt-8 text-center">
+                    <button id="generate-btn" class="w-full sm:w-auto bg-purple-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-4 focus:ring-purple-300 transition-transform transform hover:scale-105">
+                        <i class="fas fa-magic-sparkles mr-2"></i>Gerar Descrição
+                    </button>
+                </div>
+            </div>
+
+            <!-- Seção de Carregamento e Resultado -->
+            <div id="result-section" class="mt-10 hidden">
+                <div id="loader-wrapper" class="text-center py-10">
+                    <div class="loader-main mx-auto"></div>
+                    <p class="mt-4 text-gray-600">A IA está criando uma descrição incrível para sua vaga...</p>
+                </div>
+
+                <div id="content-wrapper" class="hidden">
+                    <h2 class="text-2xl font-semibold text-gray-700 mb-4">Sua Descrição de Vaga está Pronta!</h2>
+                    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 text-gray-800 prose" id="job-description-output"></div>
+                    
+                    <!-- Seção do Prompt Principal -->
+                    <div class="mt-6">
+                        <details class="group">
+                            <summary class="text-md font-semibold text-gray-600 cursor-pointer list-none flex items-center">
+                                <i class="fas fa-terminal mr-2"></i>
+                                <span>Ver o prompt de criação enviado para a IA</span>
+                                <i class="fas fa-chevron-down transition-transform duration-300 group-open:rotate-180 ml-auto"></i>
+                            </summary>
+                            <div class="relative mt-2 bg-gray-800 text-white p-4 rounded-lg">
+                                <pre class="whitespace-pre-wrap text-sm" id="prompt-output"></pre>
+                                <button class="copy-prompt-btn" data-copy-target="prompt-output"><i class="far fa-copy"></i></button>
+                            </div>
+                        </details>
+                    </div>
+
+                    <!-- Seção de Adaptação -->
+                    <div id="adaptation-section" class="mt-6 border-t pt-6">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-4">Adaptar para Diferentes Canais</h3>
+                        <div id="channel-buttons" class="flex flex-wrap gap-3">
+                            <button data-channel="linkedin" class="channel-btn flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-all flex items-center justify-center">
+                                <i class="fab fa-linkedin mr-2"></i>LinkedIn
+                            </button>
+                            <button data-channel="indeed" class="channel-btn flex-1 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-all flex items-center justify-center">
+                                <i class="fas fa-briefcase mr-2"></i>Indeed
+                            </button>
+                            <button data-channel="social" class="channel-btn flex-1 bg-pink-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-pink-600 transition-all flex items-center justify-center">
+                                <i class="fas fa-share-alt mr-2"></i>Redes Sociais
+                            </button>
+                        </div>
+                        <div id="adaptation-result-wrapper" class="mt-4 hidden">
+                             <div class="loader-main mx-auto my-4"></div>
+                             <div id="adaptation-prompt-wrapper" class="hidden">
+                                <details class="group">
+                                    <summary class="text-md font-semibold text-gray-600 cursor-pointer list-none flex items-center mb-2">
+                                        <i class="fas fa-terminal mr-2"></i>
+                                        <span>Ver o prompt de adaptação</span>
+                                        <i class="fas fa-chevron-down transition-transform duration-300 group-open:rotate-180 ml-auto"></i>
+                                    </summary>
+                                    <div class="relative mt-2 bg-gray-800 text-white p-4 rounded-lg">
+                                        <pre class="whitespace-pre-wrap text-sm" id="adaptation-prompt-output"></pre>
+                                        <button class="copy-prompt-btn" data-copy-target="adaptation-prompt-output"><i class="far fa-copy"></i></button>
+                                    </div>
+                                </details>
+                             </div>
+                             <div id="adaptation-output" class="bg-gray-50 p-6 rounded-lg border border-gray-200 text-gray-800 prose hidden mt-4"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 border-t pt-6 flex flex-col sm:flex-row gap-3">
+                        <button id="copy-btn" class="flex-1 bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300 transition-all flex items-center justify-center">
+                            <i class="fas fa-copy mr-2"></i><span id="copy-text">Copiar Descrição Principal</span>
+                        </button>
+                        <button id="refine-btn" class="flex-1 bg-gray-700 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-800 focus:outline-none focus:ring-4 focus:ring-gray-300 transition-all flex items-center justify-center">
+                            <i class="fas fa-pencil-alt mr-2"></i>Refinar Informações
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Seção Educacional -->
+            <div class="mt-12 border-t pt-8">
+                 <details class="group">
+                    <summary class="text-xl font-semibold text-gray-700 cursor-pointer list-none flex justify-between items-center">
+                        <span><i class="fas fa-lightbulb text-yellow-500 mr-2"></i>Dicas para uma Vaga Perfeita</span>
+                        <i class="fas fa-chevron-down transition-transform duration-300 group-open:rotate-180"></i>
+                    </summary>
+                    <div class="mt-4 text-gray-600 space-y-4">
+                        <p><strong>Clareza é Tudo:</strong> Use um título de cargo claro e evite jargões internos. O candidato precisa entender a vaga imediatamente.</p>
+                        <p><strong>Fale Sobre a Cultura:</strong> Além das tarefas, descreva o ambiente de trabalho. É colaborativo? Inovador? Flexível? Isso atrai os candidatos certos.</p>
+                        <p><strong>Pense no Candidato:</strong> Em vez de apenas listar o que a empresa quer, mostre o que o candidato ganha: oportunidades de desenvolvimento, projetos desafiadores, etc.</p>
+                        <p><strong>Linguagem Inclusiva:</strong> Utilize uma linguagem neutra e acolhedora para atrair um grupo diversificado de talentos. A IA já ajuda com isso!</p>
+                    </div>
+                </details>
+            </div>
+        </main>
+        
+        <footer class="text-center mt-8 text-gray-500 text-sm">
+            <p>Ferramenta educacional desenvolvida para o curso de IA no Recrutamento e Seleção.</p>
+        </footer>
+    </div>
+
+    <script>
+        // --- Elementos do DOM ---
+        const mainContent = document.getElementById('main-content');
+        const formSection = document.getElementById('form-section');
+        const resultSection = document.getElementById('result-section');
+        const generateBtn = document.getElementById('generate-btn');
+        const refineBtn = document.getElementById('refine-btn');
+        const copyBtn = document.getElementById('copy-btn');
+        const jobDescriptionOutput = document.getElementById('job-description-output');
+        const loaderWrapper = document.getElementById('loader-wrapper');
+        const contentWrapper = document.getElementById('content-wrapper');
+        const workModelSelect = document.getElementById('work-model');
+        const locationWrapper = document.getElementById('location-wrapper');
+        const jobTitleInput = document.getElementById('job-title');
+        const promptOutput = document.getElementById('prompt-output');
+        const adaptationSection = document.getElementById('adaptation-section');
+        const channelButtons = document.getElementById('channel-buttons');
+        const adaptationResultWrapper = document.getElementById('adaptation-result-wrapper');
+        const adaptationOutput = document.getElementById('adaptation-output');
+        const adaptationPromptWrapper = document.getElementById('adaptation-prompt-wrapper');
+        const adaptationPromptOutput = document.getElementById('adaptation-prompt-output');
+
+        // Geração de tópicos
+        const generateResponsibilitiesBtn = document.getElementById('generate-responsibilities-btn');
+        const responsibilitiesTextarea = document.getElementById('responsibilities');
+        const responsibilitiesPromptWrapper = document.getElementById('responsibilities-prompt-wrapper');
+        const responsibilitiesPromptOutput = document.getElementById('responsibilities-prompt-output');
+        
+        const generateRequirementsBtn = document.getElementById('generate-requirements-btn');
+        const requirementsTextarea = document.getElementById('requirements');
+        const requirementsPromptWrapper = document.getElementById('requirements-prompt-wrapper');
+        const requirementsPromptOutput = document.getElementById('requirements-prompt-output');
+        
+        let currentJobDescription = ''; // Armazena a descrição original
+
+        // --- Lógica da Aplicação ---
+
+        // Mostra/esconde o campo de localização
+        workModelSelect.addEventListener('change', () => {
+            if (workModelSelect.value === 'Remoto') {
+                locationWrapper.classList.add('hidden');
+            } else {
+                locationWrapper.classList.remove('hidden');
+                locationWrapper.classList.add('md:col-span-2');
+            }
+        });
+
+        // Função para converter Markdown básico para HTML
+        function markdownToHtml(text) {
+            let html = text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
+                .replace(/(\r\n|\n|\r)/g, '<br>');
+
+            if (html.includes('<br>- ') || html.startsWith('- ')) {
+                 html = '<ul>' + html.replace(/<br>- /g, '</li><li>').replace(/^- /g, '<li>') + '</li></ul>';
+                 html = html.replace(/<li><br>/g, '<li>').replace(/<br\s*[\/]?><ul>/g, '<ul>');
+            }
+            return html;
+        }
+
+        // Função para chamar a API Gemini
+        async function callGeminiAPI(prompt, maxRetries = 3) {
+            let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+            const payload = { contents: chatHistory };
+            const apiKey = "AIzaSyCQIze2i1lPzBnhB0i1C2Y9JbPSy92-l4I"; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const result = await response.json();
+                    if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
+                        return result.candidates[0].content.parts[0].text;
+                    } else {
+                        throw new Error('Resposta da API inválida ou vazia.');
+                    }
+                } catch (error) {
+                    console.error(`Tentativa ${i + 1} falhou:`, error);
+                    if (i === maxRetries - 1) return null;
+                    await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+                }
+            }
+        }
+        
+        // Função auxiliar para geração de tópicos
+        async function generateTopics(button, textarea, promptWrapper, promptOutput, promptGenerator) {
+             const jobTitle = jobTitleInput.value.trim();
+            if (!jobTitle) {
+                jobTitleInput.focus();
+                jobTitleInput.placeholder = "Preencha o cargo para usar a IA!";
+                return;
+            }
+
+            const btnText = button.querySelector('.btn-text');
+            const loader = button.querySelector('.loader-inline');
+
+            button.disabled = true;
+            btnText.textContent = 'Gerando...';
+            loader.classList.remove('hidden');
+
+            const prompt = promptGenerator(jobTitle);
+            const result = await callGeminiAPI(prompt);
+
+            if (result) {
+                textarea.value = result;
+                promptOutput.textContent = prompt;
+                promptWrapper.classList.remove('hidden');
+            } else {
+                alert('Não foi possível gerar o conteúdo. Tente novamente.');
+            }
+
+            button.disabled = false;
+            btnText.textContent = '✨ Gerar com IA';
+            loader.classList.add('hidden');
+        }
+
+        // Eventos para gerar responsabilidades e requisitos
+        generateResponsibilitiesBtn.addEventListener('click', () => {
+            generateTopics(generateResponsibilitiesBtn, responsibilitiesTextarea, responsibilitiesPromptWrapper, responsibilitiesPromptOutput, (jobTitle) => 
+                `Liste 5 responsabilidades principais para um(a) "${jobTitle}". Formate como uma lista de tópicos, onde cada tópico começa com '-'. Não adicione nenhum texto introdutório.`
+            );
+        });
+
+        generateRequirementsBtn.addEventListener('click', () => {
+            generateTopics(generateRequirementsBtn, requirementsTextarea, requirementsPromptWrapper, requirementsPromptOutput, (jobTitle) => 
+                `Liste 5 requisitos essenciais (habilidades técnicas e comportamentais) para um(a) "${jobTitle}". Formate como uma lista de tópicos, onde cada tópico começa com '-'. Não adicione nenhum texto introdutório.`
+            );
+        });
+
+
+        // Evento de clique para gerar a descrição completa
+        generateBtn.addEventListener('click', async () => {
+            const jobTitle = jobTitleInput.value;
+            const seniority = document.getElementById('seniority').value;
+            const workModel = document.getElementById('work-model').value;
+            const location = document.getElementById('location').value;
+            const tone = document.getElementById('tone').value;
+            const responsibilities = responsibilitiesTextarea.value;
+            const requirements = requirementsTextarea.value;
+
+            if (!jobTitle || !responsibilities || !requirements) {
+                alert('Por favor, preencha os campos de Cargo, Responsabilidades e Requisitos.');
+                return;
+            }
+
+            formSection.classList.add('hidden');
+            resultSection.classList.remove('hidden');
+            loaderWrapper.classList.remove('hidden');
+            contentWrapper.classList.add('hidden');
+            adaptationResultWrapper.classList.add('hidden');
+            adaptationOutput.classList.add('hidden');
+            adaptationPromptWrapper.classList.add('hidden');
+
+
+            const finalPrompt = `
+Aja como um especialista em recrutamento e crie uma descrição de vaga (job description) completa e atraente.
+
+**Informações da Vaga:**
+- **Cargo:** ${jobTitle}
+- **Nível:** ${seniority}
+- **Modelo de Trabalho:** ${workModel}
+${(workModel !== 'Remoto' && location) ? `- **Localização:** ${location}` : ''}
+- **Principais Responsabilidades (transforme em texto fluido):**\n${responsibilities}
+- **Requisitos Essenciais (transforme em texto fluido):**\n${requirements}
+
+**Instruções:**
+1.  Use um tom de voz **${tone}**.
+2.  Crie uma estrutura clara com as seguintes seções em negrito: **"Sobre a Vaga"**, **"Suas Responsabilidades"**, **"O que Buscamos"**, e **"Diferenciais"**.
+3.  Na seção "Sobre a Vaga", crie um parágrafo introdutório atraente sobre a oportunidade.
+4.  Use linguagem inclusiva e evite jargões.
+5.  Formate os itens das seções de responsabilidades e requisitos como uma lista com marcadores (bullet points, iniciando com '-').
+6.  Não inclua uma seção de benefícios.
+            `.trim();
+
+            const description = await callGeminiAPI(finalPrompt);
+            currentJobDescription = description; 
+
+            loaderWrapper.classList.add('hidden');
+            if (description) {
+                jobDescriptionOutput.innerHTML = markdownToHtml(description);
+                promptOutput.textContent = finalPrompt;
+                contentWrapper.classList.remove('hidden');
+                contentWrapper.classList.add('fade-in');
+            } else {
+                jobDescriptionOutput.textContent = 'Ocorreu um erro ao gerar a descrição. Por favor, tente novamente.';
+                contentWrapper.classList.remove('hidden');
+            }
+        });
+        
+        // Evento para os botões de adaptação de canal
+        channelButtons.addEventListener('click', async (e) => {
+            const button = e.target.closest('.channel-btn');
+            if (!button) return;
+
+            const channel = button.dataset.channel;
+            if (!currentJobDescription) return;
+
+            adaptationResultWrapper.classList.remove('hidden');
+            adaptationResultWrapper.querySelector('.loader-main').classList.remove('hidden');
+            adaptationOutput.classList.add('hidden');
+            adaptationPromptWrapper.classList.add('hidden');
+
+            let adaptationPrompt = '';
+            switch(channel) {
+                case 'linkedin':
+                    adaptationPrompt = `Adapte a seguinte descrição de vaga para um post no LinkedIn. Seja mais conciso, use emojis relevantes para a área de tecnologia e finalize com 3 a 5 hashtags estratégicas.\n\nDescrição Original:\n${currentJobDescription}`;
+                    break;
+                case 'indeed':
+                    adaptationPrompt = `Reestruture a seguinte descrição de vaga para o formato otimizado do Indeed. Foque em clareza e use listas simples. Remova qualquer parágrafo muito longo e garanta que as seções de responsabilidades e requisitos sejam diretas.\n\nDescrição Original:\n${currentJobDescription}`;
+                    break;
+                case 'social':
+                    adaptationPrompt = `Crie um texto curto e chamativo para redes sociais (Instagram, Facebook) a partir da descrição de vaga abaixo. O objetivo é despertar curiosidade e levar ao clique no link da vaga. Use uma linguagem bem informal, emojis e uma chamada para ação clara.\n\nDescrição Original:\n${currentJobDescription}`;
+                    break;
+            }
+
+            const adaptedText = await callGeminiAPI(adaptationPrompt);
+
+            adaptationResultWrapper.querySelector('.loader-main').classList.add('hidden');
+            if(adaptedText) {
+                adaptationPromptOutput.textContent = adaptationPrompt;
+                adaptationPromptWrapper.classList.remove('hidden');
+                adaptationOutput.innerHTML = markdownToHtml(adaptedText);
+                adaptationOutput.classList.remove('hidden');
+            } else {
+                adaptationOutput.textContent = 'Erro ao adaptar o texto. Tente novamente.';
+                adaptationOutput.classList.remove('hidden');
+            }
+        });
+
+        // Evento para refinar a busca
+        refineBtn.addEventListener('click', () => {
+            resultSection.classList.add('hidden');
+            formSection.classList.remove('hidden');
+            formSection.classList.add('fade-in');
+            document.getElementById('copy-text').textContent = 'Copiar Descrição Principal';
+            copyBtn.classList.remove('bg-teal-500');
+            copyBtn.classList.add('bg-green-500');
+            responsibilitiesPromptWrapper.classList.add('hidden');
+            requirementsPromptWrapper.classList.add('hidden');
+        });
+
+        // Copiar texto (principal ou prompts)
+        function copyText(text, button) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                if (button.id === 'copy-btn') {
+                    const copyText = document.getElementById('copy-text');
+                    copyText.textContent = 'Copiado!';
+                    button.classList.remove('bg-green-500');
+                    button.classList.add('bg-teal-500');
+                } else {
+                    const icon = button.querySelector('i');
+                    icon.classList.remove('fa-copy');
+                    icon.classList.add('fa-check');
+                    setTimeout(() => {
+                        icon.classList.remove('fa-check');
+                        icon.classList.add('fa-copy');
+                    }, 2000);
+                }
+            } catch (err) {
+                console.error('Falha ao copiar texto: ', err);
+            }
+            document.body.removeChild(textArea);
+        }
+
+        copyBtn.addEventListener('click', () => {
+            copyText(currentJobDescription, copyBtn);
+        });
+
+        mainContent.addEventListener('click', (e) => {
+            const copyPromptBtn = e.target.closest('.copy-prompt-btn');
+            if (copyPromptBtn) {
+                const targetId = copyPromptBtn.dataset.copyTarget;
+                const textToCopy = document.getElementById(targetId).textContent;
+                copyText(textToCopy, copyPromptBtn);
+            }
+        });
+
+    </script>
+</body>
+</html>

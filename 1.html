@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo 1: Ferramenta de Busca Booleana para Recrutadores</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 250px;
+            background-color: #555;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -125px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #555 transparent transparent transparent;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* Animação para o spinner */
+        .loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
+        
+        <!-- Cabeçalho -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-blue-600">Mestre da Busca Booleana</h1>
+            <p class="text-gray-600 mt-2 text-lg">Crie buscas e descubra habilidades com o poder da IA.</p>
+        </header>
+
+        <main class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
+
+            <!-- Seção do Formulário -->
+            <div id="form-section">
+                <h2 class="text-2xl font-semibold mb-2 text-gray-700">Monte sua Busca X-Ray</h2>
+                <p class="text-gray-500 mb-6">Preencha os campos abaixo para gerar sua string de busca personalizada.</p>
+
+                <div class="space-y-6">
+                    <!-- Plataforma -->
+                    <div>
+                        <label class="block text-md font-medium text-gray-700 mb-2">1. Onde você quer procurar?</label>
+                        <div class="flex items-center space-x-4">
+                            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition-all has-[:checked]:bg-blue-50 has-[:checked]:border-blue-400">
+                                <input type="radio" name="platform" value="linkedin" class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500" checked>
+                                <i class="fab fa-linkedin text-2xl text-blue-700 mx-3"></i>
+                                <span class="text-md font-medium">LinkedIn</span>
+                            </label>
+                            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-all has-[:checked]:bg-gray-800 has-[:checked]:border-gray-900 has-[:checked]:text-white">
+                                <input type="radio" name="platform" value="github" class="h-4 w-4 text-gray-600 border-gray-300 focus:ring-gray-500">
+                                <i class="fab fa-github text-2xl mx-3"></i>
+                                <span class="text-md font-medium">GitHub</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Cargo -->
+                    <div>
+                        <label for="job-title" class="block text-md font-medium text-gray-700">2. Cargo Desejado</label>
+                        <input type="text" id="job-title" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: Desenvolvedor(a) Frontend, Product Manager">
+                    </div>
+
+                    <!-- Habilidades -->
+                    <div>
+                        <div class="flex justify-between items-center">
+                            <label for="skills" class="block text-md font-medium text-gray-700">3. Habilidades e Palavras-chave</label>
+                            <button id="gemini-suggester-btn" class="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center">
+                                <span id="gemini-btn-text">✨ Sugerir Habilidades</span>
+                                <div id="gemini-loader" class="loader ml-2 hidden"></div>
+                            </button>
+                        </div>
+                        <div id="prompt-used" class="mt-2 text-sm text-gray-500 hidden">
+                            <p class="font-medium">Prompt utilizado:</p>
+                            <p id="prompt-text" class="bg-gray-50 p-2 rounded mt-1 text-xs break-words"></p>
+                        </div>
+                        <textarea id="skills" rows="3" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: React, Node.js, Figma, Liderança... ou clique em 'Sugerir com IA'"></textarea>
+                    </div>
+
+                    <!-- Localização -->
+                    <div>
+                        <label for="location" class="block text-md font-medium text-gray-700">4. Localização (Opcional)</label>
+                        <input type="text" id="location" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: São Paulo, Remoto, Brasil">
+                    </div>
+
+                    <!-- Palavras a Excluir -->
+                    <div>
+                        <label for="exclude" class="block text-md font-medium text-gray-700">5. Palavras para Excluir</label>
+                        <input type="text" id="exclude" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: Estágio, Trainee, Exemplo Corp">
+                    </div>
+                </div>
+
+                <!-- Botão Gerar -->
+                <div class="mt-8 text-center">
+                    <button id="generate-btn" class="w-full sm:w-auto bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-transform transform hover:scale-105">
+                        <i class="fas fa-cogs mr-2"></i>Gerar Busca Mágica
+                    </button>
+                </div>
+            </div>
+
+            <!-- Seção de Resultado -->
+            <div id="result-section" class="mt-10 hidden">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Sua Busca Booleana está Pronta!</h2>
+                <div class="bg-gray-100 p-4 rounded-lg border border-gray-200 mb-4">
+                    <p id="boolean-string" class="text-gray-800 text-md break-words"></p>
+                </div>
+                <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button id="copy-btn" class="bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300 transition-all flex items-center justify-center">
+                        <i class="fas fa-copy mr-2"></i><span id="copy-text">Copiar</span>
+                    </button>
+                    <a id="search-btn" href="#" target="_blank" class="bg-gray-800 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-400 transition-all flex items-center justify-center">
+                        <i class="fab fa-google mr-2"></i>Procurar
+                    </a>
+                </div>
+
+                <!-- Seção do Prompt Utilizado -->
+                <div class="mt-6 border-t pt-6">
+                    <details class="group">
+                        <summary class="text-lg font-medium text-gray-700 cursor-pointer flex items-center">
+                            <i class="fas fa-code mr-2"></i>
+                            <span>Ver prompt utilizado</span>
+                            <i class="fas fa-chevron-down ml-auto transition-transform duration-300 group-open:rotate-180"></i>
+                        </summary>
+                        <div class="mt-3 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <pre id="search-prompt" class="whitespace-pre-wrap text-sm text-gray-700"></pre>
+                            <button onclick="copyPrompt()" class="mt-2 text-blue-600 text-sm font-medium hover:text-blue-800 flex items-center">
+                                <i class="far fa-copy mr-1"></i> Copiar prompt
+                            </button>
+                        </div>
+                    </details>
+
+                    <!-- Sugestões de Melhoria -->
+                    <div class="mt-6">
+                        <h3 class="text-lg font-medium text-gray-700 mb-3">Sugestões para melhorar sua busca:</h3>
+                        
+                        <div class="space-y-4">
+                            <!-- Sugestão 1 -->
+                            <details class="group border rounded-lg overflow-hidden">
+                                <summary class="bg-gray-50 px-4 py-3 cursor-pointer flex items-center">
+                                    <span class="font-medium text-gray-700">🔍 Busca Avançada com Filtros Adicionais</span>
+                                    <i class="fas fa-chevron-down ml-auto transition-transform duration-300 group-open:rotate-180"></i>
+                                </summary>
+                                <div class="p-4 bg-white">
+                                    <p class="text-sm text-gray-600 mb-3">Adiciona filtros por anos de experiência e palavras-chave adicionais para refinar os resultados.</p>
+                                    <pre id="suggestion-1" class="whitespace-pre-wrap text-xs bg-gray-50 p-3 rounded border border-gray-200"></pre>
+                                    <button onclick="copySuggestion('suggestion-1')" class="mt-2 text-blue-600 text-xs font-medium hover:text-blue-800 flex items-center">
+                                        <i class="far fa-copy mr-1"></i> Copiar
+                                    </button>
+                                </div>
+                            </details>
+
+                            <!-- Sugestão 2 -->
+                            <details class="group border rounded-lg overflow-hidden">
+                                <summary class="bg-gray-50 px-4 py-3 cursor-pointer flex items-center">
+                                    <span class="font-medium text-gray-700">🎯 Busca por Competências Específicas</span>
+                                    <i class="fas fa-chevron-down ml-auto transition-transform duration-300 group-open:rotate-180"></i>
+                                </summary>
+                                <div class="p-4 bg-white">
+                                    <p class="text-sm text-gray-600 mb-3">Foca em competências específicas e sinônimos para encontrar candidatos com habilidades semelhantes.</p>
+                                    <pre id="suggestion-2" class="whitespace-pre-wrap text-xs bg-gray-50 p-3 rounded border border-gray-200"></pre>
+                                    <button onclick="copySuggestion('suggestion-2')" class="mt-2 text-blue-600 text-xs font-medium hover:text-blue-800 flex items-center">
+                                        <i class="far fa-copy mr-1"></i> Copiar
+                                    </button>
+                                </div>
+                            </details>
+
+                            <!-- Sugestão 3 -->
+                            <details class="group border rounded-lg overflow-hidden">
+                                <summary class="bg-gray-50 px-4 py-3 cursor-pointer flex items-center">
+                                    <span class="font-medium text-gray-700">🚀 Busca por Nível de Experiência</span>
+                                    <i class="fas fa-chevron-down ml-auto transition-transform duration-300 group-open:rotate-180"></i>
+                                </summary>
+                                <div class="p-4 bg-white">
+                                    <p class="text-sm text-gray-600 mb-3">Adiciona filtros específicos para diferentes níveis de experiência e cargos relacionados.</p>
+                                    <pre id="suggestion-3" class="whitespace-pre-wrap text-xs bg-gray-50 p-3 rounded border border-gray-200"></pre>
+                                    <button onclick="copySuggestion('suggestion-3')" class="mt-2 text-blue-600 text-xs font-medium hover:text-blue-800 flex items-center">
+                                        <i class="far fa-copy mr-1"></i> Copiar
+                                    </button>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="refine-btn" class="mt-6 w-full text-blue-600 font-semibold py-2 px-4 rounded-lg hover:bg-blue-50 transition-all">
+                    <i class="fas fa-arrow-left mr-2"></i>Refinar Busca
+                </button>
+            </div>
+            
+            <!-- Seção Educacional -->
+            <div class="mt-12 border-t pt-8 space-y-6">
+                 <details class="group">
+                    <summary class="text-xl font-semibold text-gray-700 cursor-pointer list-none flex justify-between items-center">
+                        <span><i class="fas fa-graduation-cap text-blue-500 mr-2"></i>Dicas de Ouro para Busca Booleana</span>
+                        <i class="fas fa-chevron-down transition-transform duration-300 group-open:rotate-180"></i>
+                    </summary>
+                    <div class="mt-4 text-gray-600 space-y-4">
+                        <p><strong>Aspas (" "):</strong> Use para buscar frases exatas. <code>"Gerente de Projetos"</code> encontra exatamente essa frase, e não <code>"Gerente de outros Projetos"</code>.</p>
+                        <p><strong>AND:</strong> Conecta termos e exige que TODOS eles apareçam nos resultados. Nossa ferramenta já faz isso por padrão entre os campos.</p>
+                        <p><strong>OR:</strong> Busca por um termo OU outro. Ótimo para sinônimos. Ex: <code>(Developer OR Engineer OR Programmer)</code>.</p>
+                        <p><strong>NOT (-):</strong> Exclui termos. O sinal de menos <code>-</code> deve vir colado na palavra. Ex: <code>-Júnior</code>.</p>
+                        <p><strong>Parênteses ( ):</strong> Agrupam termos para criar buscas complexas. Ex: <code>"Desenvolvedor" AND (React OR Angular) AND (NodeJS OR "Nest.js")</code>.</p>
+                        <p><strong>Dica Bônus:</strong> Varie os termos! Um "Desenvolvedor" também pode se descrever como "Engenheiro de Software" ou "Programador". Use o operador <code>OR</code> para ampliar seu alcance.</p>
+                    </div>
+                </details>
+                
+                <details class="group">
+                    <summary class="text-xl font-semibold text-gray-700 cursor-pointer list-none flex justify-between items-center">
+                        <span><i class="fas fa-rocket text-purple-500 mr-2"></i>Ampliando Horizontes com IA (Google Gemini)</span>
+                        <i class="fas fa-chevron-down transition-transform duration-300 group-open:rotate-180"></i>
+                    </summary>
+                    <div class="mt-4 text-gray-600 space-y-4">
+                        <p>Use o Google Gemini para turbinar sua estratégia de busca antes mesmo de começar a digitar no Google:</p>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong>Expandir Palavras-chave:</strong> Peça sinônimos e termos relacionados para suas habilidades. Isso enriquece sua busca. <strong>Exemplo de prompt:</strong> <code>"Quais são os sinônimos e tecnologias relacionadas a 'Node.js' no contexto de desenvolvimento backend? Liste 10 termos."</code></li>
+                            <li><strong>Identificar Empresas-Alvo:</strong> Descubra onde os melhores talentos podem estar trabalhando. <strong>Exemplo de prompt:</strong> <code>"Liste 15 startups de tecnologia (fintechs e healthtechs) que mais crescem em São Paulo."</code></li>
+                            <li><strong>Refinar a Busca Booleana:</strong> Peça para a IA otimizar sua string de busca para melhores resultados. <strong>Exemplo de prompt:</strong> <code>"Como posso melhorar esta busca booleana para encontrar um 'Gerente de Marketing Digital' sênior, excluindo perfis de estágio? Minha busca atual é: 'site:linkedin.com/in/ "Gerente de Marketing Digital" (SEO OR SEM)'"</code></li>
+                        </ul>
+                    </div>
+                </details>
+            </div>
+        </main>
+        
+        <footer class="text-center mt-8 text-gray-500 text-sm">
+            <p>Ferramenta educacional desenvolvida para o curso de IA no Recrutamento e Seleção.</p>
+        </footer>
+    </div>
+
+    <script>
+        // --- Elementos do DOM ---
+        const generateBtn = document.getElementById('generate-btn');
+        const refineBtn = document.getElementById('refine-btn');
+        const copyBtn = document.getElementById('copy-btn');
+        const searchBtn = document.getElementById('search-btn');
+        const booleanStringEl = document.getElementById('boolean-string');
+        const formSection = document.getElementById('form-section');
+        const resultSection = document.getElementById('result-section');
+        const jobTitleInput = document.getElementById('job-title');
+        const skillsInput = document.getElementById('skills');
+
+        // --- Elementos da Integração Gemini ---
+        const geminiBtn = document.getElementById('gemini-suggester-btn');
+        const geminiBtnText = document.getElementById('gemini-btn-text');
+        const geminiLoader = document.getElementById('gemini-loader');
+        const promptUsed = document.getElementById('prompt-used');
+        const promptText = document.getElementById('prompt-text');
+        
+        // --- Lógica da Aplicação ---
+
+        // Função para chamar a API Gemini com retry e backoff exponencial
+        async function callGeminiAPI(userPrompt, maxRetries = 3) {
+            let chatHistory = [{ role: "user", parts: [{ text: userPrompt }] }];
+            const payload = { contents: chatHistory };
+            
+            // Chave da API fixa
+            const apiKey = "AIzaSyCQIze2i1lPzBnhB0i1C2Y9JbPSy92-l4I";
+            
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        return result.candidates[0].content.parts[0].text;
+                    } else {
+                        throw new Error('Resposta da API inválida ou vazia.');
+                    }
+                } catch (error) {
+                    console.error(`Tentativa ${i + 1} falhou:`, error);
+                    if (i === maxRetries - 1) {
+                        return null; 
+                    }
+                    const delay = Math.pow(2, i) * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        }
+
+        // Evento de clique para o botão de sugestão de habilidades
+        geminiBtn.addEventListener('click', async () => {
+            const jobTitle = jobTitleInput.value.trim();
+            if (!jobTitle) {
+                jobTitleInput.focus();
+                jobTitleInput.placeholder = "Por favor, preencha o cargo primeiro!";
+                return;
+            }
+
+            // Verificar se o cargo foi preenchido
+            if (!jobTitle) {
+                alert('Por favor, preencha o campo de cargo primeiro.');
+                jobTitleInput.focus();
+                return;
+            }
+
+            geminiBtn.disabled = true;
+            geminiLoader.classList.remove('hidden');
+            geminiBtnText.textContent = 'Sugerindo...';
+
+            try {
+                const prompt = `Liste 10 habilidades e tecnologias essenciais para um(a) "${jobTitle}", separadas por vírgula. Forneça apenas a lista de habilidades, sem nenhuma introdução ou texto adicional.`;
+            
+            // Mostrar o prompt utilizado
+            promptText.textContent = prompt;
+            promptUsed.classList.remove('hidden');
+                
+                const suggestions = await callGeminiAPI(prompt);
+
+                if (suggestions) {
+                    const currentSkills = skillsInput.value.trim();
+                    if (currentSkills && !currentSkills.endsWith(',')) {
+                        skillsInput.value = currentSkills + ', ' + suggestions;
+                    } else {
+                        skillsInput.value = (currentSkills || '') + suggestions;
+                    }
+                } else {
+                    // Se houver erro, limpar a chave para pedir novamente na próxima tentativa
+                    localStorage.removeItem('gemini_api_key');
+                    alert('Erro ao conectar com a API. Verifique sua chave de API e tente novamente.');
+                }
+            } catch (error) {
+                console.error('Erro ao chamar a API:', error);
+                alert('Ocorreu um erro ao processar sua solicitação. Por favor, tente novamente.');
+            }
+            
+            geminiBtn.disabled = false;
+            geminiLoader.classList.add('hidden');
+            geminiBtnText.textContent = '✨ Sugerir Habilidades';
+        });
+        
+        // Funções auxiliares para manipulação de texto
+        function copyPrompt() {
+            const promptText = document.getElementById('search-prompt').textContent;
+            navigator.clipboard.writeText(promptText).then(() => {
+                const copyBtn = document.querySelector('[onclick="copyPrompt()"]');
+                const icon = copyBtn.querySelector('i');
+                const originalIcon = icon.className;
+                copyBtn.innerHTML = '<i class="fas fa-check mr-1"></i> Copiado!';
+                setTimeout(() => {
+                    copyBtn.innerHTML = `<i class="${originalIcon}"></i> Copiar prompt`;
+                }, 2000);
+            });
+        }
+
+        function copySuggestion(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector(`[onclick="copySuggestion('${elementId}')"]`);
+                const icon = btn.querySelector('i');
+                const originalIcon = icon.className;
+                const originalText = btn.textContent.trim();
+                btn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+                setTimeout(() => {
+                    btn.innerHTML = `<i class="${originalIcon}"></i> ${originalText}`;
+                }, 2000);
+            });
+        }
+
+        // Evento de clique para gerar a busca booleana
+        generateBtn.addEventListener('click', () => {
+            const platform = document.querySelector('input[name="platform"]:checked').value;
+            const jobTitle = jobTitleInput.value.trim();
+            const skills = skillsInput.value.trim();
+            const location = document.getElementById('location').value.trim();
+            const exclude = document.getElementById('exclude').value.trim();
+
+            let site = '';
+            let query = [];
+            let platformName = platform === 'linkedin' ? 'LinkedIn' : 'GitHub';
+
+            if (platform === 'linkedin') {
+                site = 'site:linkedin.com/in/';
+                query.push(site, '-"/jobs/"', '-"/company/"', '-"/school/"');
+            } else if (platform === 'github') {
+                site = 'site:github.com';
+                const githubExclusions = [
+                    '-inurl:issues', '-inurl:pulls', '-inurl:actions', 
+                    '-inurl:projects', '-inurl:wiki', '-inurl:security', 
+                    '-inurl:insights', '-inurl:releases', '-inurl:tags', 
+                    '-inurl:discussions', '-inurl:sponsors', '-inurl:marketplace', 
+                    '-inurl:topics', '-inurl:explore', '-inurl:collections', '-inurl:gist'
+                ];
+                query.push(site, ...githubExclusions);
+            }
+
+            if (jobTitle) {
+                query.push(jobTitle.includes('"') ? jobTitle : `"${jobTitle}"`);
+            }
+
+            if (skills) {
+                const skillsArray = skills.split(',').map(s => s.trim()).filter(s => s);
+                if (skillsArray.length > 0) {
+                    query.push(`(${skillsArray.join(' OR ')})`);
+                }
+            }
+            
+            if (location) {
+                query.push(`(${location.split(',').map(s => s.trim()).filter(s => s).join(' OR ')}`);
+            }
+
+            if (exclude) {
+                const excludeArray = exclude.split(',').map(s => `-${s.trim()}`).filter(s => s.length > 1);
+                query.push(...excludeArray);
+            }
+
+            // Gerar o prompt base
+            const basePrompt = `Crie uma busca booleana no ${platformName} para encontrar candidatos com as seguintes características:
+- Cargo: ${jobTitle || 'Não especificado'}
+- Habilidades: ${skills || 'Não especificado'}
+- Localização: ${location || 'Não especificado'}
+- Excluir: ${exclude || 'Nada a excluir'}`;
+
+            // Mostrar o prompt base
+            document.getElementById('search-prompt').textContent = basePrompt;
+
+            // Gerar sugestões de prompts melhorados
+            const suggestions = [
+                `Busca avançada no ${platformName} para o cargo de ${jobTitle || 'candidatos'} com foco em competências técnicas e experiência:
+- Incluir anos de experiência (ex: "3+ anos" OR "sênior" OR "pleno")
+- Adicionar tecnologias relacionadas
+- Incluir certificações relevantes
+- Adicionar termos de busca por metodologias (ex: "ágil" OR "scrum")
+- Incluir ferramentas específicas da área
+- Adicionar termos de busca por formação acadêmica
+- Incluir termos de busca por projetos ou portfólios
+
+Exemplo de uso para o cargo de ${jobTitle || 'seu cargo'}:`,
+                
+                `Busca refinada no ${platformName} para encontrar ${jobTitle || 'candidatos'} com competências específicas em ${skills || 'tecnologias-chave'}:
+- Incluir sinônimos e variações dos termos de busca
+- Adicionar habilidades complementares
+- Incluir termos em inglês e português
+- Adicionar frameworks e bibliotecas relacionadas
+- Incluir termos de busca por projetos de código aberto (para GitHub)
+- Adicionar termos de busca por publicações ou artigos (para LinkedIn)
+
+Exemplo para ${jobTitle || 'seu cargo'}:`,
+                
+                `Busca segmentada no ${platformName} para ${jobTitle || 'candidatos'} por nível de experiência e especialização:
+- Definir nível (Júnior, Pleno, Sênior, Especialista)
+- Incluir cargos relacionados
+- Adicionar termos de busca por tipo de empresa (startup, corporação, remoto)
+- Incluir termos de busca por indústria (se aplicável)
+- Adicionar termos de busca por tamanho de empresa
+- Incluir termos de busca por tecnologias emergentes na área
+
+Exemplo para ${jobTitle || 'seu cargo'}:`
+            ];
+
+            // Preencher as sugestões
+            suggestions.forEach((suggestion, index) => {
+                document.getElementById(`suggestion-${index + 1}`).textContent = suggestion;
+            });
+
+            const finalQuery = query.join(' ');
+            booleanStringEl.textContent = finalQuery;
+            
+            searchBtn.href = `https://www.google.com/search?q=${encodeURIComponent(finalQuery)}`;
+
+            formSection.classList.add('hidden');
+            resultSection.classList.remove('hidden');
+            resultSection.classList.add('fade-in');
+        });
+
+        // Evento para refinar a busca
+        refineBtn.addEventListener('click', () => {
+            resultSection.classList.add('hidden');
+            formSection.classList.remove('hidden');
+            formSection.classList.add('fade-in');
+            document.getElementById('copy-text').textContent = 'Copiar';
+            copyBtn.classList.remove('bg-teal-500');
+            copyBtn.classList.add('bg-green-500');
+        });
+
+        // Evento para copiar o texto
+        copyBtn.addEventListener('click', () => {
+            const textToCopy = booleanStringEl.textContent;
+            const textArea = document.createElement('textarea');
+            textArea.value = textToCopy;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                const copyText = document.getElementById('copy-text');
+                copyText.textContent = 'Copiado!';
+                copyBtn.classList.remove('bg-green-500');
+                copyBtn.classList.add('bg-teal-500');
+            } catch (err) {
+                console.error('Falha ao copiar texto: ', err);
+            }
+            document.body.removeChild(textArea);
+        });
+
+    </script>
+</body>
+</html>
