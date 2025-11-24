@@ -24,62 +24,281 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-light: #eef2ff;
+            --secondary: #f3f4f6;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card: #ffffff;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --border: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            min-height: 100vh;
         }
-        .tooltip {
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        
+        main {
+            background: var(--card);
+            border-radius: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+        }
+        
+        main:hover {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        input[type="text"], textarea, select {
+            width: 100%;
+            padding: 0.875rem 1.125rem;
+            border: 2px solid var(--border);
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            transition: var(--transition);
+            background: white;
+            font-family: inherit;
+        }
+        
+        input[type="text"]:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            transform: translateY(-1px);
+        }
+
+        input[type="text"]:hover, textarea:hover {
+            border-color: #d1d5db;
+        }
+        
+        button, .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.875rem 1.75rem;
+            border: none;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
             position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        button.primary, .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+        
+        button.primary:hover, .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+        }
+
+        button.primary:active {
+            transform: translateY(0);
+        }
+        
+        button.secondary, .btn-secondary {
+            background: var(--secondary);
+            color: var(--text);
+        }
+        
+        button.secondary:hover, .btn-secondary:hover {
+            background: #e5e7eb;
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .card {
+            background: var(--card);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .badge {
             display: inline-block;
+            padding: 0.375rem 0.875rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
-        .tooltip .tooltiptext {
-            visibility: hidden;
-            width: 250px;
-            background-color: #555;
-            color: #fff;
-            text-align: left;
-            border-radius: 6px;
-            padding: 10px;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -125px;
-            opacity: 0;
-            transition: opacity 0.3s;
+        
+        .badge-primary {
+            background: var(--primary-light);
+            color: var(--primary);
         }
-        .tooltip .tooltiptext::after {
-            content: "";
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: #555 transparent transparent transparent;
-        }
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-            opacity: 1;
-        }
+
         .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
+            animation: fadeIn 0.5s ease-in;
         }
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        /* Animação para o spinner */
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         .loader {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #3498db;
+            border: 2px solid #f3f4f6;
+            border-top: 2px solid var(--primary);
             border-radius: 50%;
             width: 16px;
             height: 16px;
             animation: spin 1s linear infinite;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.5rem 1rem;
+            background: #1f2937;
+            color: white;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            z-index: 1000;
+            margin-bottom: 0.5rem;
+        }
+
+        .validation-error {
+            border-color: var(--error) !important;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .success-message {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Responsive improvements */
+        @media (max-width: 640px) {
+            .container {
+                padding: 1rem 0.5rem;
+            }
+            
+            main {
+                border-radius: 1rem;
+            }
+            
+            button, .btn {
+                width: 100%;
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-hover);
         }
     </style>
 </head>
@@ -88,9 +307,16 @@
     <div class="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
         
         <!-- Cabeçalho -->
-        <header class="text-center mb-8">
-            <h1 class="text-3xl sm:text-4xl font-bold text-blue-600">Mestre da Busca Booleana</h1>
-            <p class="text-gray-600 mt-2 text-lg">Crie buscas e descubra habilidades com o poder da IA.</p>
+        <header class="text-center mb-10 fade-in">
+            <div class="inline-block mb-4">
+                <span class="badge badge-primary">✨ Powered by AI</span>
+            </div>
+            <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">
+                🔍 Mestre da Busca Booleana
+            </h1>
+            <p class="text-white text-opacity-90 mt-3 text-lg sm:text-xl max-w-2xl mx-auto drop-shadow">
+                Crie buscas booleanas avançadas e descubra os melhores talentos com o poder da Inteligência Artificial
+            </p>
         </header>
 
         <main class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
@@ -155,17 +381,28 @@
 
                 <!-- Botão Gerar -->
                 <div class="mt-8 text-center">
-                    <button id="generate-btn" class="w-full sm:w-auto bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-transform transform hover:scale-105">
-                        <i class="fas fa-cogs mr-2"></i>Gerar Busca Mágica
+                    <button id="generate-btn" class="primary w-full sm:w-auto py-3 px-8 text-lg font-bold">
+                        <i class="fas fa-magic mr-2"></i>
+                        <span style="position: relative; z-index: 1;">Gerar Busca Mágica</span>
                     </button>
                 </div>
             </div>
 
             <!-- Seção de Resultado -->
             <div id="result-section" class="mt-10 hidden">
-                <h2 class="text-2xl font-semibold text-gray-700 mb-4">Sua Busca Booleana está Pronta!</h2>
-                <div class="bg-gray-100 p-4 rounded-lg border border-gray-200 mb-4">
-                    <p id="boolean-string" class="text-gray-800 text-md break-words"></p>
+                <div class="success-message">
+                    <i class="fas fa-check-circle text-xl"></i>
+                    <span class="font-semibold">Sua Busca Booleana está Pronta!</span>
+                </div>
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-xl font-semibold text-gray-700">String de Busca Gerada:</h2>
+                    <span id="char-count" class="text-sm text-gray-500"></span>
+                </div>
+                <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-5 rounded-xl border-2 border-indigo-200 mb-4 relative">
+                    <p id="boolean-string" class="text-gray-800 text-md break-words font-mono leading-relaxed"></p>
+                    <div class="absolute top-2 right-2">
+                        <span class="badge badge-primary">✓ Otimizada</span>
+                    </div>
                 </div>
                 <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <button id="copy-btn" class="bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-300 transition-all flex items-center justify-center">
@@ -431,7 +668,82 @@
         }
 
         // Evento de clique para gerar a busca booleana
+        // Função para formatar termos de busca
+        function formatSearchTerms(terms) {
+            if (!terms) return '';
+            // Remove espaços extras e divide por vírgula
+            return terms.split(',')
+                .map(term => term.trim())
+                .filter(term => term.length > 0)
+                .map(term => `"${term}"`)
+                .join(' OR ');
+        }
+
+        // Função para construir a busca booleana
+        function buildBooleanSearch(platform, jobTitle, skills, location, exclude) {
+            let searchTerms = [];
+            
+            // Adiciona o site baseado na plataforma
+            if (platform === 'linkedin') {
+                searchTerms.push('site:linkedin.com/in/ -"jobs/" -"company/" -"school/"');
+            } else if (platform === 'github') {
+                searchTerms.push('site:github.com');
+            }
+            
+            // Adiciona o cargo se existir
+            if (jobTitle) {
+                searchTerms.push(`"${jobTitle}"`);
+            }
+            
+            // Adiciona habilidades se existirem
+            const formattedSkills = formatSearchTerms(skills);
+            if (formattedSkills) {
+                searchTerms.push(`(${formattedSkills})`);
+            }
+            
+            // Adiciona localização se existir
+            if (location) {
+                searchTerms.push(`"${location}"`);
+            }
+            
+            // Adiciona termos para excluir se existirem
+            if (exclude) {
+                const excludeTerms = exclude.split(',')
+                    .map(term => `-${term.trim()}`)
+                    .join(' ');
+                searchTerms.push(excludeTerms);
+            }
+            
+            return searchTerms.join(' ');
+        }
+
+        // Função de validação
+        function validateForm() {
+            let isValid = true;
+            const jobTitle = jobTitleInput.value.trim();
+            const skills = skillsInput.value.trim();
+
+            // Remove classes de erro anteriores
+            jobTitleInput.classList.remove('validation-error');
+            skillsInput.classList.remove('validation-error');
+
+            if (!jobTitle && !skills) {
+                jobTitleInput.classList.add('validation-error');
+                skillsInput.classList.add('validation-error');
+                alert('⚠️ Por favor, preencha pelo menos o cargo ou as habilidades para gerar uma busca válida.');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        // Evento de clique para gerar a busca booleana
         generateBtn.addEventListener('click', () => {
+            // Validar formulário
+            if (!validateForm()) {
+                return;
+            }
+
             const platform = document.querySelector('input[name="platform"]:checked').value;
             const jobTitle = jobTitleInput.value.trim();
             const skills = skillsInput.value.trim();
@@ -464,12 +776,28 @@
             if (skills) {
                 const skillsArray = skills.split(',').map(s => s.trim()).filter(s => s);
                 if (skillsArray.length > 0) {
-                    query.push(`(${skillsArray.join(' OR ')})`);
+                    // Adiciona aspas apenas se a skill não tiver aspas já
+                    const formattedSkills = skillsArray.map(skill => {
+                        if (skill.startsWith('"') && skill.endsWith('"')) {
+                            return skill;
+                        }
+                        return `"${skill}"`;
+                    }).join(' OR ');
+                    query.push(`(${formattedSkills})`);
                 }
             }
             
             if (location) {
-                query.push(`(${location.split(',').map(s => s.trim()).filter(s => s).join(' OR ')}`);
+                const locationArray = location.split(',').map(s => s.trim()).filter(s => s);
+                if (locationArray.length > 0) {
+                    const formattedLocations = locationArray.map(loc => {
+                        if (loc.startsWith('"') && loc.endsWith('"')) {
+                            return loc;
+                        }
+                        return `"${loc}"`;
+                    }).join(' OR ');
+                    query.push(`(${formattedLocations})`);
+                }
             }
 
             if (exclude) {
@@ -529,6 +857,10 @@ Exemplo para ${jobTitle || 'seu cargo'}:`
             const finalQuery = query.join(' ');
             booleanStringEl.textContent = finalQuery;
             
+            // Atualizar contador de caracteres
+            const charCount = document.getElementById('char-count');
+            charCount.textContent = `${finalQuery.length} caracteres`;
+            
             searchBtn.href = `https://www.google.com/search?q=${encodeURIComponent(finalQuery)}`;
 
             formSection.classList.add('hidden');
@@ -546,25 +878,86 @@ Exemplo para ${jobTitle || 'seu cargo'}:`
             copyBtn.classList.add('bg-green-500');
         });
 
-        // Evento para copiar o texto
-        copyBtn.addEventListener('click', () => {
+        // Evento para copiar o texto (usando Clipboard API moderna)
+        copyBtn.addEventListener('click', async () => {
             const textToCopy = booleanStringEl.textContent;
-            const textArea = document.createElement('textarea');
-            textArea.value = textToCopy;
-            document.body.appendChild(textArea);
-            textArea.select();
+            const copyText = document.getElementById('copy-text');
+            const icon = copyBtn.querySelector('i');
+            
             try {
-                document.execCommand('copy');
-                const copyText = document.getElementById('copy-text');
+                await navigator.clipboard.writeText(textToCopy);
+                
+                // Feedback visual
+                icon.className = 'fas fa-check mr-2';
                 copyText.textContent = 'Copiado!';
-                copyBtn.classList.remove('bg-green-500');
-                copyBtn.classList.add('bg-teal-500');
+                copyBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                copyBtn.classList.add('bg-teal-500', 'hover:bg-teal-600');
+                
+                // Resetar após 2 segundos
+                setTimeout(() => {
+                    icon.className = 'fas fa-copy mr-2';
+                    copyText.textContent = 'Copiar';
+                    copyBtn.classList.remove('bg-teal-500', 'hover:bg-teal-600');
+                    copyBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                }, 2000);
             } catch (err) {
                 console.error('Falha ao copiar texto: ', err);
+                // Fallback para método antigo
+                const textArea = document.createElement('textarea');
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    copyText.textContent = 'Copiado!';
+                } catch (err2) {
+                    alert('Erro ao copiar. Por favor, copie manualmente.');
+                }
+                document.body.removeChild(textArea);
             }
-            document.body.removeChild(textArea);
         });
 
     </script>
+    
+    <!-- 
+    ✨ MELHORIAS IMPLEMENTADAS:
+    
+    1. BUG FIX: Corrigido o parêntese não fechado na linha 619 (location)
+    
+    2. UI/UX MODERNIZADA:
+       - Gradiente de fundo moderno (roxo/azul)
+       - Animações suaves (fade-in, hover effects, ripple)
+       - Sombras e bordas sofisticadas
+       - Tipografia melhorada com Inter font
+       - Scrollbar customizada
+       
+    3. VALIDAÇÃO DE FORMULÁRIO:
+       - Validação que exige pelo menos cargo OU habilidades
+       - Feedback visual com animação de shake
+       - Mensagens de erro claras
+       
+    4. CONSTRUÇÃO DE BUSCA BOOLEANA APRIMORADA:
+       - Formatação automática com aspas para termos
+       - Tratamento inteligente de aspas existentes
+       - Suporte para múltiplas localizações com OR
+       - Formatação consistente de skills e locations
+       
+    5. FEEDBACK VISUAL MELHORADO:
+       - Mensagem de sucesso ao gerar busca
+       - Contador de caracteres da string
+       - Botão de copiar com Clipboard API moderna
+       - Feedback visual ao copiar (ícone muda para check)
+       - Badge "Otimizada" na string gerada
+       
+    6. RESPONSIVIDADE:
+       - Layout adaptável para mobile
+       - Botões full-width em telas pequenas
+       - Espaçamento otimizado
+       
+    7. ACESSIBILIDADE:
+       - Transições suaves
+       - Estados de hover/focus claros
+       - Contraste de cores adequado
+    -->
 </body>
 </html>
